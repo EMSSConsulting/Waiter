@@ -7,15 +7,20 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
-func TestCustomer_Normal(t *testing.T) {
-	stateCh := make(chan string)
-
+func getTestAPIClient() *api.Client {
 	apiConfig := api.DefaultConfig()
 
 	apiConfig.Address = "127.0.0.1:8500"
 	apiConfig.WaitTime = 10 * time.Second
 
 	client, _ := api.NewClient(apiConfig)
+
+	return client
+}
+
+func TestCustomer_Normal(t *testing.T) {
+	stateCh := make(chan string)
+	client := getTestAPIClient()
 
 	cust := NewCustomer(client, "wait/test", "cust1", stateCh)
 	sess, err := NewSession(client, "cust1")
@@ -49,13 +54,7 @@ func TestCustomer_Normal(t *testing.T) {
 
 func TestCustomer_MultiState(t *testing.T) {
 	stateCh := make(chan string)
-
-	apiConfig := api.DefaultConfig()
-
-	apiConfig.Address = "127.0.0.1:8500"
-	apiConfig.WaitTime = 10 * time.Second
-
-	client, _ := api.NewClient(apiConfig)
+	client := getTestAPIClient()
 
 	cust := NewCustomer(client, "wait/test", "cust1", stateCh)
 	sess, err := NewSession(client, "cust1")
@@ -91,4 +90,38 @@ func TestCustomer_MultiState(t *testing.T) {
 	}
 
 	close(stateCh)
+}
+
+func TestCustomer_Remove(t *testing.T) {
+	stateCh := make(chan string)
+	client := getTestAPIClient()
+
+	cust := NewCustomer(client, "wait/test", "cust1", stateCh)
+
+	err := cust.Remove()
+	if err != nil {
+		t.Fatalf("Expected remove to be successful")
+	}
+
+	go func() {
+		err := cust.Run(nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
+
+	time.Sleep(10 * time.Millisecond) // Delay to allow the goroutine to start
+
+	err = cust.Remove()
+	if err == nil {
+		t.Fatalf("Expected remove to fail if the customer was running")
+	}
+
+	close(stateCh)
+	time.Sleep(10 * time.Millisecond) // Delay to allow stateCh to close and the goroutine to exit
+
+	err = cust.Remove()
+	if err != nil {
+		t.Fatalf("Expected remove to be successful")
+	}
 }

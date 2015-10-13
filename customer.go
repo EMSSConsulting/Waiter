@@ -16,6 +16,7 @@ type Customer struct {
 
 	client  *api.Client
 	session *Session
+	running bool
 }
 
 // NewCustomer configures a new wait customer instance correctly, preparing it to run when
@@ -34,6 +35,8 @@ func NewCustomer(client *api.Client, prefix, name string, state <-chan string) *
 // Run starts a message pump which will update the customer's wait key whenever
 // the state changes, stopping when the state channel is closed.
 func (c *Customer) Run(session *Session) error {
+	c.running = true
+	defer func() { c.running = false }()
 	c.session = session
 
 	sessionID := ""
@@ -43,18 +46,20 @@ func (c *Customer) Run(session *Session) error {
 
 	kv := c.client.KV()
 
-	acquired, _, err := kv.Acquire(&api.KVPair{
-		Key:     c.fullKey(),
-		Value:   []byte{},
-		Session: sessionID,
-	}, nil)
+	if c.session != nil {
+		acquired, _, err := kv.Acquire(&api.KVPair{
+			Key:     c.fullKey(),
+			Value:   []byte{},
+			Session: sessionID,
+		}, nil)
 
-	if !acquired && err == nil {
-		err = fmt.Errorf("Could not acquire lock on '%s'", c.fullKey())
-	}
+		if !acquired && err == nil {
+			err = fmt.Errorf("Could not acquire lock on '%s'", c.fullKey())
+		}
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	for state := range c.State {
@@ -70,6 +75,17 @@ func (c *Customer) Run(session *Session) error {
 	}
 
 	return nil
+}
+
+func (c *Customer) Remove() error {
+	if c.running {
+		return fmt.Errorf("Cannot remove a customer which is currently running, please close the state channel first.")
+	}
+
+	kv := c.client.KV()
+
+	_, err := kv.Delete(c.fullKey(), nil)
+	return err
 }
 
 func (c *Customer) fullKey() string {
