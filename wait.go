@@ -1,3 +1,7 @@
+// Package waiter provides "wait for all" semantics for users of Consul.
+// This allows you to wait on numerous asynchronous operations, blocking
+// until they have all completed, across multiple different nodes and with
+// no knowledge of which nodes will respond beforehand.
 package waiter
 
 import (
@@ -8,7 +12,7 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
-//Wait provides a means to wait for multiple nodes to set a key within a prefix
+// Wait provides a means to wait for multiple nodes to set a key within a prefix
 // prior to completing. It can be used in conjunction with sessions to ensure that
 // all nodes have finished an operation before continuing.
 type Wait struct {
