@@ -51,7 +51,7 @@ type WaitNodeUpdate struct {
 
 // NewWait creates a new Wait entry with a sensible default isReady function if
 // nil is provided in its place.
-func NewWait(client *api.Client, prefix string, minimumNodes int, isReady func(n *WaitNode) bool) *Wait {
+func NewWaiter(client *api.Client, prefix string, minimumNodes int, isReady func(n *WaitNode) bool) *Wait {
 	if isReady == nil {
 		isReady = func(n *WaitNode) bool {
 			return true

@@ -24,7 +24,7 @@ func TestWaiter_SingleNodeNoState(t *testing.T) {
 		}
 	}()
 
-	wait := NewWait(client, "wait", 1, nil)
+	wait := NewWaiter(client, "wait", 1, nil)
 
 	go func() {
 		_, err := wait.Wait(10 * time.Second)
@@ -104,7 +104,7 @@ func TestWaiter_SingleNodeState(t *testing.T) {
 		t.Fatalf("Failed to remove test tree node from Consul: %s", err.Error())
 	}
 
-	wait := NewWait(client, "wait", 1, func(w *WaitNode) bool {
+	wait := NewWaiter(client, "wait", 1, func(w *WaitNode) bool {
 		return w.State == "ready"
 	})
 
