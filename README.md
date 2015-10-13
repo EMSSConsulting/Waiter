@@ -1,4 +1,4 @@
-# Waiter [![GoDoc](https://godoc.org/github.com/EMSSConsulting/Waiter?status.png)](https://godoc.org/github.com/EMSSConsulting/Waiter)
+# Waiter [![GoDoc](https://godoc.org/github.com/EMSSConsulting/Waiter?status.png)](https://godoc.org/github.com/EMSSConsulting/Waiter) [![Build Status](https://travis-ci.org/EMSSConsulting/Waiter.svg)](https://travis-ci.org/EMSSConsulting/Waiter)
 **Blocking wait until all semantics for Consul**
 
 Waiter was designed to address a specific requirement of
