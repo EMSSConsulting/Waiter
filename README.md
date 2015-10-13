@@ -34,11 +34,11 @@ import (
     "github.com/EMSSConsulting/waiter"
 )
 
-func main() {
-    prefix := "waiter/prefix"
-    minimumNodes := 1
-    waitTimeout := 10 * time.Second
+func isNodeReady(w *waiter.WaitNode) bool {
+    return true
+}
 
+func getAPIClient() *api.Client {
     apiConfig := api.DefaultConfig()
 
 	apiConfig.Address = "127.0.0.1:8500"
@@ -46,8 +46,21 @@ func main() {
 
 	client, _ := api.NewClient(apiConfig)
 
-    wait := waiter.NewWait(client, prefix, minimumNodes, nil)
+    return client
+}
 
+func main() {
+    prefix := "waiter/prefix"
+    minimumNodes := 1
+    waitTimeout := 10 * time.Second
+
+    // Instantiate a new Consul API client
+    client := getAPIClient()
+
+    // Setup the waiter with its prefix, minimum number of nodes and the node ready function
+    wait := waiter.NewWaiter(client, prefix, minimumNodes, isNodeReady)
+
+    // Block until all the nodes are ready or the wait timeout has expired
     allReady, err := wait.Wait(waitTimeout)
 
     if err != nil {
@@ -81,10 +94,7 @@ import (
     "github.com/EMSSConsulting/waiter"
 )
 
-func main() {
-    prefix := "waiter/prefix"
-    name := "node1"
-
+func getAPIClient() *api.Client {
     apiConfig := api.DefaultConfig()
 
 	apiConfig.Address = "127.0.0.1:8500"
@@ -92,7 +102,20 @@ func main() {
 
 	client, _ := api.NewClient(apiConfig)
 
+    return client
+}
+
+func main() {
+    prefix := "waiter/prefix"
+    name := "node1"
+
+    // Instantiate Consul API Client
+    client := getAPIClient()
+
+    // Create a session, will remove all customer keys when the application closes
     customerSession, err := waiter.NewSession(client, name)
+
+    // Ensure that we close the session when the application exits
     defer customerSession.Close()
 
     if err != nil {
@@ -100,11 +123,13 @@ func main() {
         os.Exit(3)
     }
 
-
+    // Create a channel which will receive the new states
     customerState := make(chan string)
 
+    // Create the customer with its prefix, name and state channel
     customer := waiter.NewCustomer(client, prefix, name, customerState)
 
+    // Run the customer asynchronously to process state changes
     go func() {
         err := customer.Run(customerSession)
         if err != nil {
@@ -113,6 +138,7 @@ func main() {
         }
     }()
 
+    // Publish some state changes
     customerState <- "busy"
     time.Sleep(10 * time.Second)
     customerState <- "ready"
