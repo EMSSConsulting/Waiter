@@ -9,5 +9,5 @@ before_script:
     - ./consul --version
 
 script:
-    - ./consul -server -bootstrap-expect 1 -data-dir /tmp/consul &
+    - ./consul agent -server -bootstrap-expect 1 -data-dir /tmp/consul &
     - go test
