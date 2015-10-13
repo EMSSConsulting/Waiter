@@ -11,4 +11,4 @@ before_script:
 script:
     - ./consul agent -server -bootstrap-expect 1 -data-dir /tmp/consul &
     - sleep 10
-    - go test
+    - go test -v
