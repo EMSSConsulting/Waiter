@@ -92,36 +92,43 @@ func TestCustomer_MultiState(t *testing.T) {
 	close(stateCh)
 }
 
-func TestCustomer_Remove(t *testing.T) {
+func TestCustomer_Shutdown(t *testing.T) {
 	stateCh := make(chan string)
 	client := getTestAPIClient()
 
 	cust := NewCustomer(client, "wait/test", "cust1", stateCh)
+	sess, err := NewSession(client, "cust1")
 
-	err := cust.Remove()
 	if err != nil {
-		t.Fatalf("Expected remove to be successful")
+		t.Fatalf("Failed to create session: %s", err)
+		return
 	}
 
+	defer sess.Close()
+
 	go func() {
-		err := cust.Run(nil)
+		err := cust.Run(sess)
 		if err != nil {
 			t.Fatal(err)
 		}
 	}()
 
-	time.Sleep(10 * time.Millisecond) // Delay to allow the goroutine to start
+	stateCh <- "busy"
 
-	err = cust.Remove()
-	if err == nil {
-		t.Fatalf("Expected remove to fail if the customer was running")
+	valueWaiter := newValueAwaiter("wait/test/cust1", "busy")
+
+	err = valueWaiter.wait(client, 5*time.Second)
+
+	if err != nil {
+		t.Fatalf("Failed to retrieve value of customer entry: %s", err)
 	}
 
-	close(stateCh)
-	time.Sleep(10 * time.Millisecond) // Delay to allow stateCh to close and the goroutine to exit
+	valueWaiter = newValueAwaiter("wait/test/cust1", "")
 
-	err = cust.Remove()
+	close(stateCh)
+	err = valueWaiter.wait(client, 5*time.Second)
+
 	if err != nil {
-		t.Fatalf("Expected remove to be successful")
+		t.Fatalf("Expected customer entry to be removed: %s", err)
 	}
 }

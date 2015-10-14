@@ -33,6 +33,10 @@ func (w *awaitValue) wait(client *api.Client, timeout time.Duration) error {
 		if p != nil && string(p.Value) == w.Value {
 			return nil
 		}
+
+		if p == nil && w.Value == "" {
+			return nil
+		}
 	}
 
 	return fmt.Errorf("Timeout expired waiting for '%s'='%s'", w.Key, w.Value)
