@@ -62,9 +62,9 @@ func NewWaiter(client *api.Client, prefix string, minimumNodes int, isReady func
 		}
 	}
 
-	nodeUpdateCh := make(chan WaitNodeUpdate)
-	nodeReadyCh := make(chan WaitNode)
-	allReadyCh := make(chan []WaitNode)
+	nodeUpdateCh := make(chan WaitNodeUpdate, 2)
+	nodeReadyCh := make(chan WaitNode, 2)
+	allReadyCh := make(chan []WaitNode, 2)
 
 	return &Wait{
 		Prefix:       prefix,
