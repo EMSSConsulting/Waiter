@@ -77,6 +77,9 @@ func (c *Customer) Run(session *Session) error {
 	return nil
 }
 
+// Remove will remove this customer's entry from Consul. This action can only
+// be taken when the customer message pump is not running, you can stop an
+// active message pump by closing its state channel.
 func (c *Customer) Remove() error {
 	if c.running {
 		return fmt.Errorf("Cannot remove a customer which is currently running, please close the state channel first.")
