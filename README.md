@@ -82,6 +82,10 @@ straightforward. It publishes state changes using a go channel and is intended t
 be used in conjunction with the Session object - which ensures that the registered
 waits are removed when your application is closed.
 
+In addition to the safety provided through the use of a session, the customer will
+also remove its state entry should the state channel be closed. This is intended to
+allow applications to remove their locks easily.
+
 ### Using Customer
 ```go
 package consumer
