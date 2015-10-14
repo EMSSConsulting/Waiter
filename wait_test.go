@@ -47,7 +47,7 @@ func TestWaiter_SingleNodeNoState(t *testing.T) {
 
 	go func() {
 		select {
-		case update := <-wait.NodeUpdate():
+		case update := <-wait.NodeUpdate:
 			if update.Node != "gr1" {
 				t.Fatalf("Expected first node update to be from gr1")
 			}
@@ -66,7 +66,7 @@ func TestWaiter_SingleNodeNoState(t *testing.T) {
 
 	go func() {
 		select {
-		case node := <-wait.NodeReady():
+		case node := <-wait.NodeReady:
 			if node.Node != "gr1" {
 				t.Fatalf("Expected first node update to be from gr1")
 			}
@@ -80,7 +80,7 @@ func TestWaiter_SingleNodeNoState(t *testing.T) {
 	}()
 
 	select {
-	case allReady := <-wait.AllReady():
+	case allReady := <-wait.AllReady:
 		if len(allReady) != 1 {
 			t.Fatalf("Expected one node to fulfil the allReady promise")
 		}
@@ -133,7 +133,7 @@ func TestWaiter_SingleNodeState(t *testing.T) {
 
 	go func() {
 		select {
-		case update := <-wait.NodeUpdate():
+		case update := <-wait.NodeUpdate:
 			if update.Node != "gr1" {
 				t.Fatalf("Expected first node update to be from gr1")
 			}
@@ -150,7 +150,7 @@ func TestWaiter_SingleNodeState(t *testing.T) {
 		}
 
 		select {
-		case update := <-wait.NodeUpdate():
+		case update := <-wait.NodeUpdate:
 			if update.Node != "gr1" {
 				t.Fatalf("Expected second node update to be from gr1")
 			}
@@ -169,7 +169,7 @@ func TestWaiter_SingleNodeState(t *testing.T) {
 
 	go func() {
 		select {
-		case node := <-wait.NodeReady():
+		case node := <-wait.NodeReady:
 			if node.Node != "gr1" {
 				t.Fatalf("Expected first node ready to be from gr1")
 			}
@@ -183,7 +183,7 @@ func TestWaiter_SingleNodeState(t *testing.T) {
 	}()
 
 	select {
-	case allReady := <-wait.AllReady():
+	case allReady := <-wait.AllReady:
 		if len(allReady) != 1 {
 			t.Fatalf("Expected one node to fulfil the allReady promise")
 		}

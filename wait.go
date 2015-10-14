@@ -25,6 +25,10 @@ type Wait struct {
 	// a ready state.
 	IsReady func(n *WaitNode) (isReady bool)
 
+	NodeUpdate <-chan WaitNodeUpdate
+	NodeReady  <-chan WaitNode
+	AllReady   <-chan []WaitNode
+
 	nodeUpdate chan WaitNodeUpdate
 	nodeReady  chan WaitNode
 	allReady   chan []WaitNode
@@ -58,14 +62,22 @@ func NewWaiter(client *api.Client, prefix string, minimumNodes int, isReady func
 		}
 	}
 
+	nodeUpdateCh := make(chan WaitNodeUpdate)
+	nodeReadyCh := make(chan WaitNode)
+	allReadyCh := make(chan []WaitNode)
+
 	return &Wait{
 		Prefix:       prefix,
 		MinimumNodes: minimumNodes,
 		IsReady:      isReady,
 
-		nodeUpdate: make(chan WaitNodeUpdate, 1000),
-		nodeReady:  make(chan WaitNode, 1000),
-		allReady:   make(chan []WaitNode, 1000),
+		NodeUpdate: nodeUpdateCh,
+		NodeReady:  nodeReadyCh,
+		AllReady:   allReadyCh,
+
+		nodeUpdate: nodeUpdateCh,
+		nodeReady:  nodeReadyCh,
+		allReady:   allReadyCh,
 
 		client: client,
 		kv:     client.KV(),
@@ -111,24 +123,6 @@ func (w *Wait) Wait(timeout time.Duration) (bool, error) {
 	}
 
 	return false, nil
-}
-
-// NodeUpdate gets a reference to the node update notification channel which will
-// emit a notification when a node's state changes.
-func (w *Wait) NodeUpdate() <-chan WaitNodeUpdate {
-	return w.nodeUpdate
-}
-
-// NodeReady gets a reference to the node ready notification channel which will
-// emit a notification when a node has written a ready state value.
-func (w *Wait) NodeReady() <-chan WaitNode {
-	return w.nodeReady
-}
-
-// AllReady gets a reference to the all ready notification channel which will
-// emit a notification when every node has written a ready state value.
-func (w *Wait) AllReady() <-chan []WaitNode {
-	return w.allReady
 }
 
 func (w *Wait) shouldStop(timeout time.Duration) bool {
