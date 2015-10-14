@@ -16,7 +16,6 @@ type Customer struct {
 
 	client  *api.Client
 	session *Session
-	running bool
 }
 
 // NewCustomer configures a new wait customer instance correctly, preparing it to run when
@@ -35,8 +34,8 @@ func NewCustomer(client *api.Client, prefix, name string, state <-chan string) *
 // Run starts a message pump which will update the customer's wait key whenever
 // the state changes, stopping when the state channel is closed.
 func (c *Customer) Run(session *Session) error {
-	c.running = true
-	defer func() { c.running = false }()
+	defer c.remove()
+
 	c.session = session
 
 	sessionID := ""
@@ -77,14 +76,7 @@ func (c *Customer) Run(session *Session) error {
 	return nil
 }
 
-// Remove will remove this customer's entry from Consul. This action can only
-// be taken when the customer message pump is not running, you can stop an
-// active message pump by closing its state channel.
-func (c *Customer) Remove() error {
-	if c.running {
-		return fmt.Errorf("Cannot remove a customer which is currently running, please close the state channel first.")
-	}
-
+func (c *Customer) remove() error {
 	kv := c.client.KV()
 
 	_, err := kv.Delete(c.fullKey(), nil)
