@@ -33,6 +33,7 @@ func NewSession(client *api.Client, name string) (*Session, error) {
 		Name:      name,
 		Behavior:  "delete",
 		LockDelay: time.Nanosecond,
+		TTL:       "10s",
 	}, nil)
 
 	if err != nil {
@@ -43,9 +44,13 @@ func NewSession(client *api.Client, name string) (*Session, error) {
 		select {
 		case <-s.closeCh:
 			s.Close()
-		case <-s.closedCh:
 		}
 	}()
+
+	err = session.RenewPeriodic("10s", id, nil, s.closedCh)
+	if err != nil {
+		return nil, err
+	}
 
 	s.ID = id
 	return s, nil
@@ -55,7 +60,7 @@ func NewSession(client *api.Client, name string) (*Session, error) {
 // defer to ensure that the session is correctly terminated when your application
 // exits.
 func (s *Session) Close() error {
-	if s.ID == "" {
+	if s == nil || s.ID == "" {
 		return nil
 	}
 
