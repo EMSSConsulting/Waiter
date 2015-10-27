@@ -25,6 +25,7 @@ func NewSession(client *api.Client, name string) (*Session, error) {
 	s := &Session{
 		client:  client,
 		closeCh: makeShutdownCh(),
+		closedCh: make(chan struct{}),
 	}
 
 	session := client.Session()
@@ -66,17 +67,8 @@ func (s *Session) Close() error {
 		return nil
 	}
 
-	select {
-	case s.closedCh <- struct{}{}:
-	default:
-	}
-
-	session := s.client.Session()
-	_, err := session.Destroy(s.ID, nil)
-
-	if err != nil {
-		return err
-	}
+	close(s.closedCh)
+	
 	s.ID = ""
 	return nil
 }
