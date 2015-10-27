@@ -47,10 +47,12 @@ func NewSession(client *api.Client, name string) (*Session, error) {
 		}
 	}()
 
-	err = session.RenewPeriodic("10s", id, nil, s.closedCh)
-	if err != nil {
-		return nil, err
-	}
+	go func() {
+		err = session.RenewPeriodic("10s", id, nil, s.closedCh)
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	s.ID = id
 	return s, nil
@@ -64,16 +66,16 @@ func (s *Session) Close() error {
 		return nil
 	}
 
+	select {
+	case s.closedCh <- struct{}{}:
+	default:
+	}
+
 	session := s.client.Session()
 	_, err := session.Destroy(s.ID, nil)
 
 	if err != nil {
 		return err
-	}
-
-	select {
-	case s.closedCh <- struct{}{}:
-	default:
 	}
 	s.ID = ""
 	return nil
