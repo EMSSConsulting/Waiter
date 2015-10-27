@@ -142,14 +142,14 @@ func (w *Wait) createTreeEntry() error {
 
 func (w *Wait) getNodeList(waitIndex uint64) ([]WaitNode, uint64, error) {
 	list, meta, err := w.kv.List(w.Prefix, &api.QueryOptions{
-		WaitIndex: waitIndex,
+		WaitIndex:  waitIndex,
+		AllowStale: true,
 	})
 
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// -1 since we ignore the root node
 	nodes := []WaitNode{}
 
 	for i := 0; i < len(list); i++ {
